@@ -1,0 +1,1 @@
+protoc proto/calculate.proto --go_out=plugins=grpc:.
