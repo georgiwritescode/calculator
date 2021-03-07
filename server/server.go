@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"math"
 	"net"
 
 	"google.golang.org/grpc"
@@ -62,6 +63,30 @@ func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAvera
 
 		sum += int(req.GetNumber())
 		count++
+	}
+}
+
+func (*server) FindMaximum(stream calculatorpb.CalculatorService_FindMaximumServer) error {
+	log.Println("[INFO] FindMaximun function invoked")
+
+	oldNum := 0
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Printf("[ERROR] Failed to receive stream: %v", err)
+			return err
+		}
+
+		number := req.GetNumber()
+		currentMax := math.Max(float64(number), float64(oldNum))
+		sendErr := stream.Send(&calculatorpb.FindMaximumResponse{CurrentMax: int32(currentMax)})
+		if sendErr != nil {
+			log.Fatalf("[ERROR Failed to send data: %v", sendErr)
+			return sendErr
+		}
 	}
 }
 

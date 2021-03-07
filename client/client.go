@@ -22,9 +22,10 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 
-	doCalculateUnary(c)
-	doClientStreamingComputeAverage(c)
-	doServerStreamingDecomposition(c)
+	// doCalculateUnary(c)
+	// doClientStreamingComputeAverage(c)
+	// doServerStreamingDecomposition(c)
+	doBiDiStreamingFindMaximum(c)
 }
 
 func doCalculateUnary(c calculatorpb.CalculatorServiceClient) {
@@ -76,7 +77,7 @@ func doServerStreamingDecomposition(c calculatorpb.CalculatorServiceClient) {
 }
 
 func doClientStreamingComputeAverage(c calculatorpb.CalculatorServiceClient) {
-	log.Println("[INFO] doClientStreamingComputeAverage invoked ...")
+	log.Println("[INFO] doClientStreamingComputeAverage was invoked ...")
 
 	requests := []*calculatorpb.ComputeAverageRequest{
 		{Number: 5},
@@ -100,4 +101,53 @@ func doClientStreamingComputeAverage(c calculatorpb.CalculatorServiceClient) {
 		log.Fatalf("[ERROR] Could not receive response from Compute Average: %v", err)
 	}
 	log.Printf("[INFO] Response: %v", res)
+}
+
+func doBiDiStreamingFindMaximum(c calculatorpb.CalculatorServiceClient) {
+	log.Println("[INFO] doBiDiStreamingFindMaximum was invoked ...")
+
+	stream, err := c.FindMaximum(context.Background())
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to create stream: %v", err)
+		return
+	}
+	requests := []*calculatorpb.FindMaximumRequest{
+		{Number: 5},
+		{Number: 3},
+		{Number: 12},
+		{Number: 97},
+	}
+
+	//create a channel with empty struct to block
+	waitc := make(chan struct{})
+
+	//send data to the server
+	go func() {
+		for _, req := range requests {
+			log.Printf("[INFO] Outgoing message: %v", req)
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+
+		stream.CloseSend()
+	}()
+
+	//read messages from server
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				close(waitc)
+			}
+
+			if err != nil {
+				log.Fatalf("[ERROR] Failed to read data from server: %v", err)
+			}
+
+			log.Printf("[INFO] Response from FindMaximum server: %v", res)
+		}
+	}()
+
+	//wait for the channel to be blocked
+	<-waitc
 }
