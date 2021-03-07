@@ -5,6 +5,8 @@ import (
 	"context"
 	"log"
 
+	"io"
+
 	"google.golang.org/grpc"
 )
 
@@ -18,7 +20,9 @@ func main() {
 	defer cc.Close()
 
 	c := calculatorpb.NewCalculatorServiceClient(cc)
+
 	doCalculateUnary(c)
+	doServerStreamingDecomposition(c)
 }
 
 func doCalculateUnary(c calculatorpb.CalculatorServiceClient) {
@@ -38,4 +42,33 @@ func doCalculateUnary(c calculatorpb.CalculatorServiceClient) {
 		log.Fatalf("Failed to send req with: %v", err)
 	}
 	log.Printf("Response: %v", res)
+}
+
+func doServerStreamingDecomposition(c calculatorpb.CalculatorServiceClient) {
+	log.Println("[INFO] doServerStreamingDecomposition invoked ...")
+
+	req := &calculatorpb.PrimeNumberRequest{
+		PrimeNumber: &calculatorpb.PrimeNumber{
+			PrimeNumber: 12,
+		},
+	}
+
+	stream, err := c.PrimeNumberDecomposition(context.Background(), req)
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to stream data: %v", err)
+	}
+
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			log.Fatalln("[ERROR] End of stream reached")
+			break
+		}
+
+		if err != nil {
+			log.Fatalf("[ERROR] Failed to read stream: %v", err)
+		}
+
+		log.Printf("[INFO] Response from Decomposition: %v", msg.GetPrimeNumber())
+	}
 }
