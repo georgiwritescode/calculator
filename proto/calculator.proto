@@ -16,6 +16,20 @@ message CalculateResponse {
         int32  sum = 1;
 }
 
+message PrimeNumber {
+    int32 prime_number = 1;
+}
+
+message PrimeNumberRequest {
+    PrimeNumber prime_number = 1;
+}
+
+message PrimeNumberResponse {
+    int32 prime_number = 1;
+}
+
 service CalculatorService {
     rpc Calculate (CalculateRequest) returns (CalculateResponse) {};
+
+    rpc PrimeNumberDecomposition(PrimeNumberRequest) returns (stream PrimeNumberResponse) {};
 }
