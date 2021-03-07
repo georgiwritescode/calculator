@@ -28,8 +28,18 @@ message PrimeNumberResponse {
     int32 prime_number = 1;
 }
 
+message ComputeAverageRequest {
+    int32 number = 1;
+}
+
+message ComputeAverageResponse {
+    float average = 1;
+}
+
 service CalculatorService {
     rpc Calculate (CalculateRequest) returns (CalculateResponse) {};
 
     rpc PrimeNumberDecomposition(PrimeNumberRequest) returns (stream PrimeNumberResponse) {};
+
+    rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse) {};
 }

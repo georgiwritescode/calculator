@@ -3,6 +3,7 @@ package main
 import (
 	calculatorpb "calculator/proto"
 	"context"
+	"io"
 	"log"
 	"net"
 
@@ -12,7 +13,7 @@ import (
 type server struct{}
 
 func (*server) Calculate(ctx context.Context, req *calculatorpb.CalculateRequest) (*calculatorpb.CalculateResponse, error) {
-	log.Printf("Calculate func was invoked with %v", req)
+	log.Printf("[INFO] Calculate func was invoked with %v", req)
 	a := req.Numbers.GetFirst()
 	b := req.Numbers.GetSecond()
 
@@ -43,18 +44,39 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberRequest, st
 	return nil
 }
 
+func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+	log.Println("[INFO] ComputeAverage function invoked")
+
+	sum := 0
+	count := 0
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			avg := float32(sum) / float32(count)
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{Average: avg})
+		}
+		if err != nil {
+			log.Fatalf("[ERROR] Cannot read client stream: %v", err)
+		}
+
+		sum += int(req.GetNumber())
+		count++
+	}
+}
+
 func main() {
-	log.Println("Hello, I'm the calculation server!")
+	log.Println("[INFO] Calculator server has started ...")
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("[ERROR] Failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
 	calculatorpb.RegisterCalculatorServiceServer(s, &server{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Fatalf("[ERROR] Failed to serve: %v", err)
 	}
 }

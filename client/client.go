@@ -6,27 +6,29 @@ import (
 	"log"
 
 	"io"
+	"time"
 
 	"google.golang.org/grpc"
 )
 
 func main() {
-	log.Println("Hello, I'm the calculate client")
+	log.Println("[INFO] Calculator client has started ...")
 
 	cc, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("Failed to dial with err: %v", err)
+		log.Fatalf("[ERROR] Failed to dial with err: %v", err)
 	}
 	defer cc.Close()
 
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 
 	doCalculateUnary(c)
+	doClientStreamingComputeAverage(c)
 	doServerStreamingDecomposition(c)
 }
 
 func doCalculateUnary(c calculatorpb.CalculatorServiceClient) {
-	log.Println("Start an unary RPC...")
+	log.Println("[INFO] doCalculateUnary was invoked")
 
 	numbers := calculatorpb.Numbers{
 		First:  3,
@@ -39,13 +41,13 @@ func doCalculateUnary(c calculatorpb.CalculatorServiceClient) {
 
 	res, err := c.Calculate(context.Background(), req)
 	if err != nil {
-		log.Fatalf("Failed to send req with: %v", err)
+		log.Fatalf("[ERROR] Failed to send req with: %v", err)
 	}
-	log.Printf("Response: %v", res)
+	log.Printf("[INFO] Response: %v", res)
 }
 
 func doServerStreamingDecomposition(c calculatorpb.CalculatorServiceClient) {
-	log.Println("[INFO] doServerStreamingDecomposition invoked ...")
+	log.Println("[INFO] doServerStreamingDecomposition was invoked ...")
 
 	req := &calculatorpb.PrimeNumberRequest{
 		PrimeNumber: &calculatorpb.PrimeNumber{
@@ -71,4 +73,31 @@ func doServerStreamingDecomposition(c calculatorpb.CalculatorServiceClient) {
 
 		log.Printf("[INFO] Response from Decomposition: %v", msg.GetPrimeNumber())
 	}
+}
+
+func doClientStreamingComputeAverage(c calculatorpb.CalculatorServiceClient) {
+	log.Println("[INFO] doClientStreamingComputeAverage invoked ...")
+
+	requests := []*calculatorpb.ComputeAverageRequest{
+		{Number: 5},
+		{Number: 3},
+		{Number: 12},
+		{Number: 97},
+	}
+	stream, err := c.ComputeAverage(context.Background())
+	if err != nil {
+		log.Fatalf("[ERROR] Failed call Compute Average: %v", err)
+	}
+
+	for _, req := range requests {
+		log.Printf("[INFO] Sending request: %v", req)
+		stream.Send(req)
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("[ERROR] Could not receive response from Compute Average: %v", err)
+	}
+	log.Printf("[INFO] Response: %v", res)
 }
