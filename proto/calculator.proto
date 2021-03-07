@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package calculate;
-option go_package="proto;calculatepb";
+option go_package="proto;calculatorpb";
 
 message Numbers {
     int32 first = 1;
@@ -16,6 +16,6 @@ message CalculateResponse {
         int32  sum = 1;
 }
 
-service CalculateService {
+service CalculatorService {
     rpc Calculate (CalculateRequest) returns (CalculateResponse) {};
 }

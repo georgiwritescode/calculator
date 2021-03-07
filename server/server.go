@@ -1,7 +1,7 @@
 package main
 
 import (
-	calculatepb "calculator/proto"
+	calculatorpb "calculator/proto"
 	"context"
 	"log"
 	"net"
@@ -11,13 +11,13 @@ import (
 
 type server struct{}
 
-func (*server) Calculate(ctx context.Context, req *calculatepb.CalculateRequest) (*calculatepb.CalculateResponse, error) {
+func (*server) Calculate(ctx context.Context, req *calculatorpb.CalculateRequest) (*calculatorpb.CalculateResponse, error) {
 	log.Printf("Calculate func was invoked with %v", req)
 	a := req.Numbers.GetFirst()
 	b := req.Numbers.GetSecond()
 
 	sum := a + b
-	res := &calculatepb.CalculateResponse{
+	res := &calculatorpb.CalculateResponse{
 		Sum: sum,
 	}
 
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	calculatepb.RegisterCalculateServiceServer(s, &server{})
+	calculatorpb.RegisterCalculatorServiceServer(s, &server{})
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)

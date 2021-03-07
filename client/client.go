@@ -1,7 +1,7 @@
 package main
 
 import (
-	calculatepb "calculator/proto"
+	calculatorpb "calculator/proto"
 	"context"
 	"log"
 
@@ -17,19 +17,19 @@ func main() {
 	}
 	defer cc.Close()
 
-	c := calculatepb.NewCalculateServiceClient(cc)
+	c := calculatorpb.NewCalculatorServiceClient(cc)
 	doCalculateUnary(c)
 }
 
-func doCalculateUnary(c calculatepb.CalculateServiceClient) {
+func doCalculateUnary(c calculatorpb.CalculatorServiceClient) {
 	log.Println("Start an unary RPC...")
 
-	numbers := calculatepb.Numbers{
+	numbers := calculatorpb.Numbers{
 		First:  3,
 		Second: 10,
 	}
 
-	req := &calculatepb.CalculateRequest{
+	req := &calculatorpb.CalculateRequest{
 		Numbers: &numbers,
 	}
 
