@@ -1,7 +1,7 @@
 package main
 
 import (
-	calculatorpb "calculator/proto"
+	"calculator/proto/calculatorpb"
 	"context"
 	"log"
 
@@ -22,9 +22,9 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 
-	// doCalculateUnary(c)
-	// doClientStreamingComputeAverage(c)
-	// doServerStreamingDecomposition(c)
+	doCalculateUnary(c)
+	doClientStreamingComputeAverage(c)
+	doServerStreamingDecomposition(c)
 	doBiDiStreamingFindMaximum(c)
 }
 
