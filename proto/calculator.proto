@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-// package calculate;
+package calculator;
 option go_package="./calculatorpb";
 
 message Numbers {

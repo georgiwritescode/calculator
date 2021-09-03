@@ -1,7 +1,7 @@
 package main
 
 import (
-	calculatorpb "calculator/proto"
+	pb "calculator/proto/calculatorpb"
 	"context"
 	"io"
 	"log"
@@ -13,27 +13,27 @@ import (
 
 type server struct{}
 
-func (*server) Calculate(ctx context.Context, req *calculatorpb.CalculateRequest) (*calculatorpb.CalculateResponse, error) {
+func (*server) Calculate(ctx context.Context, req *pb.CalculateRequest) (*pb.CalculateResponse, error) {
 	log.Printf("[INFO] Calculate func was invoked with %v", req)
 	a := req.Numbers.GetFirst()
 	b := req.Numbers.GetSecond()
 
 	sum := a + b
-	res := &calculatorpb.CalculateResponse{
+	res := &pb.CalculateResponse{
 		Sum: sum,
 	}
 
 	return res, nil
 }
 
-func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberRequest, stream calculatorpb.CalculatorService_PrimeNumberDecompositionServer) error {
+func (*server) PrimeNumberDecomposition(req *pb.PrimeNumberRequest, stream pb.CalculatorService_PrimeNumberDecompositionServer) error {
 	log.Println("[INFO] PrimeNumberDecomposition function invoked")
 	number := req.PrimeNumber.GetPrimeNumber()
 	var divisor = int32(2)
 
 	for number > 1 {
 		if number%divisor == 0 {
-			stream.Send(&calculatorpb.PrimeNumberResponse{
+			stream.Send(&pb.PrimeNumberResponse{
 				PrimeNumber: divisor,
 			})
 			number = number / divisor
@@ -45,7 +45,7 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberRequest, st
 	return nil
 }
 
-func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+func (*server) ComputeAverage(stream pb.CalculatorService_ComputeAverageServer) error {
 	log.Println("[INFO] ComputeAverage function invoked")
 
 	sum := 0
@@ -55,7 +55,7 @@ func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAvera
 		req, err := stream.Recv()
 		if err == io.EOF {
 			avg := float32(sum) / float32(count)
-			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{Average: avg})
+			return stream.SendAndClose(&pb.ComputeAverageResponse{Average: avg})
 		}
 		if err != nil {
 			log.Fatalf("[ERROR] Cannot read client stream: %v", err)
@@ -66,7 +66,7 @@ func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAvera
 	}
 }
 
-func (*server) FindMaximum(stream calculatorpb.CalculatorService_FindMaximumServer) error {
+func (*server) FindMaximum(stream pb.CalculatorService_FindMaximumServer) error {
 	log.Println("[INFO] FindMaximun function invoked")
 
 	oldNum := 0
@@ -82,7 +82,7 @@ func (*server) FindMaximum(stream calculatorpb.CalculatorService_FindMaximumServ
 
 		number := req.GetNumber()
 		currentMax := math.Max(float64(number), float64(oldNum))
-		sendErr := stream.Send(&calculatorpb.FindMaximumResponse{CurrentMax: int32(currentMax)})
+		sendErr := stream.Send(&pb.FindMaximumResponse{CurrentMax: int32(currentMax)})
 		if sendErr != nil {
 			log.Fatalf("[ERROR Failed to send data: %v", sendErr)
 			return sendErr
@@ -99,7 +99,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	calculatorpb.RegisterCalculatorServiceServer(s, &server{})
+	pb.RegisterCalculatorServiceServer(s, &server{})
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("[ERROR] Failed to serve: %v", err)
